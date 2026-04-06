@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import PostOutput from "./PostOutput";
+import HookPicker from "./HookPicker";
 
 const personas = [
   "Founder / Entrepreneur",
@@ -30,12 +31,6 @@ const lengths = [
   { label: "Long (300+ words)", value: "long" },
 ];
 
-interface GeneratedPost {
-  hook: string;
-  body: string;
-  cta: string;
-}
-
 export default function GenerateForm() {
   const searchParams = useSearchParams();
 
@@ -44,17 +39,48 @@ export default function GenerateForm() {
   const [tone, setTone] = useState(searchParams.get("tone") ?? "");
   const [length, setLength] = useState(searchParams.get("length") ?? "medium");
   const [referencePosts, setReferencePosts] = useState("");
+
   const [loading, setLoading] = useState(false);
-  const [output, setOutput] = useState<GeneratedPost | null>(null);
+  const [hooksLoading, setHooksLoading] = useState(false);
+  const [output, setOutput] = useState<string | null>(null);
+  const [hooks, setHooks] = useState<string[]>([]);
+  const [selectedHook, setSelectedHook] = useState<string>("");
   const [error, setError] = useState("");
+
+  function validate(): boolean {
+    if (!persona || !niche || !tone) {
+      setError("Please fill in Persona, Niche, and Tone.");
+      return false;
+    }
+    setError("");
+    return true;
+  }
+
+  async function handleGenerateHooks() {
+    if (!validate()) return;
+    setHooksLoading(true);
+    setHooks([]);
+    setSelectedHook("");
+
+    try {
+      const res = await fetch("/api/hooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ persona, niche, tone }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Hook generation failed");
+      setHooks(data.hooks);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setHooksLoading(false);
+    }
+  }
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
-    if (!persona || !niche || !tone) {
-      setError("Please fill in Persona, Niche, and Tone.");
-      return;
-    }
-    setError("");
+    if (!validate()) return;
     setLoading(true);
     setOutput(null);
 
@@ -62,11 +88,11 @@ export default function GenerateForm() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ persona, niche, tone, length, referencePosts }),
+        body: JSON.stringify({ persona, niche, tone, length, referencePosts, selectedHook }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Generation failed");
-      setOutput(data);
+      setOutput(data.post);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -94,9 +120,7 @@ export default function GenerateForm() {
           >
             <option value="">Select your persona...</option>
             {personas.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
+              <option key={p} value={p}>{p}</option>
             ))}
           </select>
         </div>
@@ -188,13 +212,40 @@ export default function GenerateForm() {
           </p>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3 rounded-lg text-sm transition-colors"
-        >
-          {loading ? "Generating..." : "Generate Post"}
-        </button>
+        {/* Hook Picker (shown when hooks are loaded) */}
+        {(hooks.length > 0 || hooksLoading) && (
+          <HookPicker
+            hooks={hooks}
+            selected={selectedHook}
+            onSelect={setSelectedHook}
+            onRegenerate={handleGenerateHooks}
+            loading={hooksLoading}
+          />
+        )}
+
+        {/* Action buttons */}
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={handleGenerateHooks}
+            disabled={hooksLoading || loading}
+            className="flex-1 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 text-gray-700 dark:text-gray-300 font-semibold py-3 rounded-lg text-sm border border-gray-300 dark:border-gray-600 transition-colors"
+          >
+            {hooksLoading ? "Generating Hooks..." : "Generate Hooks Only"}
+          </button>
+
+          <button
+            type="submit"
+            disabled={loading || hooksLoading}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3 rounded-lg text-sm transition-colors"
+          >
+            {loading
+              ? "Generating..."
+              : selectedHook
+              ? "Generate Post with Hook"
+              : "Generate Post"}
+          </button>
+        </div>
       </form>
 
       {output && <PostOutput post={output} />}
