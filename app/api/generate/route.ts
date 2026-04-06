@@ -1,43 +1,101 @@
 import { NextRequest, NextResponse } from "next/server";
+import Groq from "groq-sdk";
+
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3.2";
+
+function buildPrompt(
+  persona: string,
+  niche: string,
+  tone: string,
+  length: string,
+  referencePosts: string
+): string {
+  const wordTarget =
+    length === "short" ? "under 150 words" : length === "long" ? "300+ words" : "150–300 words";
+
+  return `You are an expert LinkedIn ghostwriter. Write a LinkedIn post for a ${persona} about the topic: "${niche}".
+
+Tone: ${tone}
+Length: ${wordTarget}
+${referencePosts ? `\nStyle reference (mimic the voice and structure of these posts):\n${referencePosts}\n` : ""}
+
+Return ONLY valid JSON with this exact structure (no markdown, no backticks):
+{
+  "hook": "A powerful opening line that stops the scroll",
+  "body": "The main content of the post (use line breaks and bullet points where natural)",
+  "cta": "A strong call-to-action to drive engagement"
+}`;
+}
+
+async function generateWithGroq(prompt: string) {
+  const groq = new Groq({ apiKey: GROQ_API_KEY });
+  const completion = await groq.chat.completions.create({
+    model: "llama-3.3-70b-versatile",
+    messages: [{ role: "user", content: prompt }],
+    temperature: 0.8,
+    max_tokens: 1024,
+    response_format: { type: "json_object" },
+  });
+  return completion.choices[0].message.content ?? "";
+}
+
+async function generateWithOllama(prompt: string) {
+  const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: OLLAMA_MODEL,
+      messages: [{ role: "user", content: prompt }],
+      stream: false,
+      format: "json",
+      options: { temperature: 0.8 },
+    }),
+  });
+  if (!res.ok) throw new Error(`Ollama error: ${res.statusText}`);
+  const data = await res.json();
+  return data.message?.content ?? "";
+}
 
 export async function POST(req: NextRequest) {
-  const { persona, niche, tone, length } = await req.json();
+  const { persona, niche, tone, length, referencePosts } = await req.json();
 
-  // Mock response — swap this out for a real AI call (e.g. Claude API)
-  const lengthDesc =
-    length === "short"
-      ? "concise"
-      : length === "long"
-        ? "detailed and in-depth"
-        : "balanced";
+  if (!persona || !niche || !tone) {
+    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
 
-  const post = {
-    hook: `Most ${persona}s get this wrong about ${niche}.`,
-    body: `I used to think ${niche} was straightforward. Then I spent 3 years in the trenches.
+  const prompt = buildPrompt(persona, niche, tone, length ?? "medium", referencePosts ?? "");
 
-Here's what nobody tells you:
+  let raw = "";
 
-→ The conventional wisdom is often backwards
-→ Small, consistent actions beat sporadic big moves
-→ Your ${persona.toLowerCase()} perspective is your biggest competitive advantage
+  try {
+    if (GROQ_API_KEY) {
+      raw = await generateWithGroq(prompt);
+    } else {
+      // Fallback to local Ollama
+      raw = await generateWithOllama(prompt);
+    }
 
-The ${tone.toLowerCase()} truth is that success in ${niche} comes down to one thing: showing up with intention every single day.
+    const post = JSON.parse(raw);
 
-I've seen countless people with more resources fail while those with clarity and consistency win.
+    if (!post.hook || !post.body || !post.cta) {
+      throw new Error("Incomplete response from AI");
+    }
 
-${
-  lengthDesc === "detailed and in-depth"
-    ? `Let me break down the 3 frameworks I use:
+    return NextResponse.json(post);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Generation failed";
 
-1. The Clarity Framework — Know exactly what outcome you're driving toward
-2. The Consistency Engine — Build systems that work even when motivation fails
-3. The Community Loop — Leverage your network as a force multiplier
+    if (!GROQ_API_KEY) {
+      return NextResponse.json(
+        {
+          error: `No AI provider configured. Add GROQ_API_KEY to .env.local (free at console.groq.com) or start Ollama with a model pulled. Detail: ${message}`,
+        },
+        { status: 500 }
+      );
+    }
 
-Each of these alone is powerful. Together, they're unstoppable.`
-    : ""
-}`,
-    cta: `What's your biggest challenge with ${niche} right now? Drop it in the comments — I read every reply.`,
-  };
-
-  return NextResponse.json(post);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

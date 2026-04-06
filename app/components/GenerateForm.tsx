@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import PostOutput from "./PostOutput";
 
 const personas = [
@@ -36,10 +37,12 @@ interface GeneratedPost {
 }
 
 export default function GenerateForm() {
-  const [persona, setPersona] = useState("");
-  const [niche, setNiche] = useState("");
-  const [tone, setTone] = useState("");
-  const [length, setLength] = useState("medium");
+  const searchParams = useSearchParams();
+
+  const [persona, setPersona] = useState(searchParams.get("persona") ?? "");
+  const [niche, setNiche] = useState(searchParams.get("niche") ?? "");
+  const [tone, setTone] = useState(searchParams.get("tone") ?? "");
+  const [length, setLength] = useState(searchParams.get("length") ?? "medium");
   const [referencePosts, setReferencePosts] = useState("");
   const [loading, setLoading] = useState(false);
   const [output, setOutput] = useState<GeneratedPost | null>(null);
@@ -73,21 +76,21 @@ export default function GenerateForm() {
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-10">
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">Generate Post</h1>
-      <p className="text-sm text-gray-500 mb-8">
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">Generate Post</h1>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
         Fill in the details below and let AI craft your LinkedIn post.
       </p>
 
       <form onSubmit={handleGenerate} className="space-y-6">
         {/* Persona */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
             Persona <span className="text-red-400">*</span>
           </label>
           <select
             value={persona}
             onChange={(e) => setPersona(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="">Select your persona...</option>
             {personas.map((p) => (
@@ -100,7 +103,7 @@ export default function GenerateForm() {
 
         {/* Niche */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
             Niche / Topic <span className="text-red-400">*</span>
           </label>
           <input
@@ -108,13 +111,13 @@ export default function GenerateForm() {
             value={niche}
             onChange={(e) => setNiche(e.target.value)}
             placeholder="e.g. AI in healthcare, remote work culture, startup fundraising..."
-            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
 
         {/* Tone */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
             Tone <span className="text-red-400">*</span>
           </label>
           <div className="flex flex-wrap gap-2">
@@ -126,7 +129,7 @@ export default function GenerateForm() {
                 className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                   tone === t
                     ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-white text-gray-600 border-gray-300 hover:border-blue-400 hover:text-blue-600"
+                    : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:text-blue-600"
                 }`}
               >
                 {t}
@@ -137,7 +140,7 @@ export default function GenerateForm() {
 
         {/* Length */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
             Post Length
           </label>
           <div className="flex gap-3">
@@ -146,8 +149,8 @@ export default function GenerateForm() {
                 key={l.value}
                 className={`flex-1 flex items-center justify-center gap-2 border rounded-lg px-3 py-2.5 text-sm cursor-pointer transition-colors ${
                   length === l.value
-                    ? "border-blue-500 bg-blue-50 text-blue-700"
-                    : "border-gray-300 text-gray-600 hover:border-gray-400"
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400"
+                    : "border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500"
                 }`}
               >
                 <input
@@ -166,7 +169,7 @@ export default function GenerateForm() {
 
         {/* Reference Posts */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
             Reference Posts{" "}
             <span className="text-gray-400 font-normal">(optional)</span>
           </label>
@@ -175,12 +178,12 @@ export default function GenerateForm() {
             onChange={(e) => setReferencePosts(e.target.value)}
             placeholder="Paste 1–3 LinkedIn posts you like as style reference..."
             rows={4}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
 
         {error && (
-          <p className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-4 py-2.5">
+          <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg px-4 py-2.5">
             {error}
           </p>
         )}
