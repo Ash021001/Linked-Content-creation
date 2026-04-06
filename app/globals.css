@@ -1,3 +1,56 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Design tokens ───────────────────────────────────────────── */
+/*
+  Color psychology:
+  Light mode — warm cream (#f7f5f2) feels human, approachable, easy on eyes.
+    Avoids cold clinical white. Pairs naturally with warm accent colors.
+  Dark mode — warm charcoal (#0f0e0d) instead of pure black.
+    Pure black feels harsh. Warm dark feels premium, like quality paper.
+    Slightly warm text (#f0ece8) is easier to read than pure white.
+*/
+
+:root {
+  --bg:        #f7f5f2;   /* warm cream — approachable, natural */
+  --surface:   #ffffff;
+  --surface-2: #efece8;   /* warm off-white for inputs/tags */
+  --border:    #e2ddd7;
+  --border-2:  #ccc7bf;
+  --text:      #1a1614;   /* warm near-black — softer than #000 */
+  --text-2:    #5c534d;
+  --text-3:    #9e9590;
+  --accent:    #1a1614;
+  --accent-fg: #f7f5f2;
+}
+
+.dark {
+  --bg:        #0f0e0d;   /* warm charcoal — premium, not harsh */
+  --surface:   #171615;   /* slightly warm dark surface */
+  --surface-2: #201e1c;   /* elevated surface */
+  --border:    #2c2926;
+  --border-2:  #3d3a36;
+  --text:      #f0ece8;   /* warm white — easier on eyes than #fff */
+  --text-2:    #a09890;
+  --text-3:    #5a5450;
+  --accent:    #f0ece8;
+  --accent-fg: #0f0e0d;
+}
+
+/* ── Base ────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 4px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: var(--border-2); border-radius: 99px; }

@@ -9,6 +9,40 @@ function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function buildTwitterPrompt(
+  persona: string,
+  niche: string,
+  tone: string,
+  selectedHook?: string
+): string {
+  const styles = [
+    "A single punchy sentence — a hot take that makes people stop and think.",
+    "Two lines: line 1 sets up the tension, line 2 delivers the punch.",
+    "A bold, opinionated statement that challenges conventional wisdom. Max 2 lines.",
+    "A sharp observation written like an insider secret. 1–2 lines.",
+    "A counterintuitive truth stated with total confidence. No hedging.",
+  ];
+  const style = styles[Math.floor(Math.random() * styles.length)];
+
+  return `You are a top Twitter/X ghostwriter. Write a single tweet for a ${persona} about: "${niche}"
+Tone: ${tone}
+
+${selectedHook ? `The tweet must start with or be built around this hook:\n"${selectedHook}"\n` : ""}
+FORMAT:
+${style}
+
+RULES (non-negotiable):
+- Maximum 3 lines total — ideally 1 or 2
+- Every word must earn its place — cut anything that doesn't add punch
+- No hashtags. No @mentions. No "Thread:". No em-dashes.
+- No filler openers: "In today's world", "Hot take:", "Unpopular opinion:"
+- Write the opinion, don't announce you're giving one
+- Can be witty, irreverent, or uncomfortably direct — that's what performs
+- No corporate tone whatsoever
+
+Return only the tweet text. Nothing else.`;
+}
+
 function buildPrompt(
   persona: string,
   niche: string,
@@ -127,13 +161,15 @@ async function generateWithOllama(prompt: string): Promise<string> {
 }
 
 export async function POST(req: NextRequest) {
-  const { persona, niche, tone, length, referencePosts, selectedHook } = await req.json();
+  const { platform, persona, niche, tone, length, referencePosts, selectedHook } = await req.json();
 
   if (!persona || !niche || !tone) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const prompt = buildPrompt(persona, niche, tone, length ?? "medium", referencePosts ?? "", selectedHook ?? "");
+  const prompt = platform === "twitter"
+    ? buildTwitterPrompt(persona, niche, tone, selectedHook ?? "")
+    : buildPrompt(persona, niche, tone, length ?? "medium", referencePosts ?? "", selectedHook ?? "");
 
   try {
     let post: string;

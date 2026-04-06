@@ -16,11 +16,12 @@ export default function CategoryFilter({ active, onChange }: Props) {
         <button
           key={cat}
           onClick={() => onChange(cat as TemplateCategory | "All")}
-          className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-            active === cat
-              ? "bg-blue-600 text-white border-blue-600"
-              : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:text-blue-600"
-          }`}
+          className="px-3.5 py-2 sm:py-1.5 rounded-lg text-xs font-medium transition-all duration-150"
+          style={{
+            background: active === cat ? "var(--text)" : "var(--surface)",
+            color: active === cat ? "var(--bg)" : "var(--text-2)",
+            border: `1px solid ${active === cat ? "var(--text)" : "var(--border)"}`,
+          }}
         >
           {cat}
         </button>

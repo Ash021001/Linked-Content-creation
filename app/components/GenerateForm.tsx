@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import PostOutput from "./PostOutput";
 import HookPicker from "./HookPicker";
+import { saveToHistory } from "@/app/lib/history";
 
 const personas = [
   "Founder / Entrepreneur",
@@ -16,24 +17,27 @@ const personas = [
   "Investor",
 ];
 
-const tones = [
-  "Professional",
-  "Conversational",
-  "Inspirational",
-  "Analytical",
-  "Humorous",
-  "Bold",
+// Color psychology: each tone has a natural emotional color
+// Text is always var(--text) when selected — color lives in bg + border only
+const tones: { label: string; bg: string; border: string }[] = [
+  { label: "Professional",   bg: "rgba(96,165,250,0.20)",  border: "rgba(96,165,250,0.75)"  }, // blue — trust, authority
+  { label: "Conversational", bg: "rgba(52,211,153,0.20)",  border: "rgba(52,211,153,0.75)"  }, // emerald — warmth, connection
+  { label: "Inspirational",  bg: "rgba(251,191,36,0.20)",  border: "rgba(251,191,36,0.75)"  }, // amber — energy, optimism
+  { label: "Analytical",     bg: "rgba(167,139,250,0.20)", border: "rgba(167,139,250,0.75)" }, // violet — intelligence, depth
+  { label: "Humorous",       bg: "rgba(251,146,60,0.20)",  border: "rgba(251,146,60,0.75)"  }, // orange — fun, playfulness
+  { label: "Bold",           bg: "rgba(251,113,133,0.20)", border: "rgba(251,113,133,0.75)" }, // rose — power, confidence
 ];
 
 const lengths = [
-  { label: "Short (< 150 words)", value: "short" },
-  { label: "Medium (150–300 words)", value: "medium" },
-  { label: "Long (300+ words)", value: "long" },
+  { label: "Short",  sub: "< 150 words",   value: "short",  bg: "rgba(251,191,36,0.20)",  border: "rgba(251,191,36,0.75)"  }, // amber — quick energy
+  { label: "Medium", sub: "150–300 words", value: "medium", bg: "rgba(96,165,250,0.20)",  border: "rgba(96,165,250,0.75)"  }, // blue — balanced
+  { label: "Long",   sub: "300+ words",    value: "long",   bg: "rgba(167,139,250,0.20)", border: "rgba(167,139,250,0.75)" }, // violet — depth
 ];
 
 export default function GenerateForm() {
   const searchParams = useSearchParams();
 
+  const [platform, setPlatform] = useState<"linkedin" | "twitter">("linkedin");
   const [persona, setPersona] = useState(searchParams.get("persona") ?? "");
   const [niche, setNiche] = useState(searchParams.get("niche") ?? "");
   const [tone, setTone] = useState(searchParams.get("tone") ?? "");
@@ -61,7 +65,6 @@ export default function GenerateForm() {
     setHooksLoading(true);
     setHooks([]);
     setSelectedHook("");
-
     try {
       const res = await fetch("/api/hooks", {
         method: "POST",
@@ -83,16 +86,16 @@ export default function GenerateForm() {
     if (!validate()) return;
     setLoading(true);
     setOutput(null);
-
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ persona, niche, tone, length, referencePosts, selectedHook }),
+        body: JSON.stringify({ platform, persona, niche, tone, length, referencePosts, selectedHook }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Generation failed");
       setOutput(data.post);
+      saveToHistory({ post: data.post, persona, niche, tone, length, platform });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -100,25 +103,94 @@ export default function GenerateForm() {
     }
   }
 
-  return (
-    <div className="max-w-2xl mx-auto px-6 py-10">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">Generate Post</h1>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
-        Fill in the details below and let AI craft your LinkedIn post.
-      </p>
+  const inputClass = "w-full rounded-lg px-3.5 py-2.5 text-sm outline-none transition-all duration-150"
+    + " placeholder:text-[var(--text-3)]";
 
-      <form onSubmit={handleGenerate} className="space-y-6">
+  return (
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+
+      {/* Header */}
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-lg sm:text-xl font-semibold mb-1" style={{ color: "var(--text)" }}>
+          Generate Post
+        </h1>
+        <p className="text-sm" style={{ color: "var(--text-2)" }}>
+          Fill in your details and let Viraly write your next scroll-stopper.
+        </p>
+      </div>
+
+      <form onSubmit={handleGenerate} className="space-y-5">
+
+        {/* Platform selector */}
+        <div>
+          <label className="block text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: "var(--text)" }}>
+            Platform
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {/* LinkedIn */}
+            <button
+              type="button"
+              onClick={() => setPlatform("linkedin")}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-150 text-left"
+              style={{
+                background: platform === "linkedin" ? "rgba(10,102,194,0.15)" : "var(--surface)",
+                border: `1px solid ${platform === "linkedin" ? "rgba(10,102,194,0.65)" : "var(--border)"}`,
+              }}
+            >
+              <div
+                className="w-8 h-8 rounded-md flex items-center justify-center shrink-0 text-white text-xs font-black"
+                style={{ background: "#0a66c2" }}
+              >
+                in
+              </div>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>LinkedIn</p>
+                <p className="text-[11px]" style={{ color: "var(--text-3)" }}>Long · Story-driven</p>
+              </div>
+            </button>
+
+            {/* Twitter / X */}
+            <button
+              type="button"
+              onClick={() => setPlatform("twitter")}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-150 text-left"
+              style={{
+                background: platform === "twitter" ? "rgba(255,255,255,0.08)" : "var(--surface)",
+                border: `1px solid ${platform === "twitter" ? "var(--border-2)" : "var(--border)"}`,
+              }}
+            >
+              <div
+                className="w-8 h-8 rounded-md flex items-center justify-center shrink-0"
+                style={{ background: "var(--text)" }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--bg)">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622Zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>Twitter / X</p>
+                <p className="text-[11px]" style={{ color: "var(--text-3)" }}>Short · Punchy · Witty</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
         {/* Persona */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-            Persona <span className="text-red-400">*</span>
+          <label className="block text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: "var(--text)" }}>
+            Persona
           </label>
           <select
             value={persona}
             onChange={(e) => setPersona(e.target.value)}
-            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={inputClass}
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              color: persona ? "var(--text)" : "var(--text-3)",
+            }}
           >
-            <option value="">Select your persona...</option>
+            <option value="">Select your role...</option>
             {personas.map((p) => (
               <option key={p} value={p}>{p}</option>
             ))}
@@ -127,92 +199,127 @@ export default function GenerateForm() {
 
         {/* Niche */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-            Niche / Topic <span className="text-red-400">*</span>
+          <label className="block text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: "var(--text)" }}>
+            Topic / Niche
           </label>
           <input
             type="text"
             value={niche}
             onChange={(e) => setNiche(e.target.value)}
-            placeholder="e.g. AI in healthcare, remote work culture, startup fundraising..."
-            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="e.g. startup fundraising, remote work, AI tooling..."
+            className={inputClass}
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              color: "var(--text)",
+            }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--border-2)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
           />
         </div>
 
         {/* Tone */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-            Tone <span className="text-red-400">*</span>
+          <label className="block text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: "var(--text)" }}>
+            Tone
           </label>
           <div className="flex flex-wrap gap-2">
-            {tones.map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTone(t)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                  tone === t
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:text-blue-600"
-                }`}
-              >
-                {t}
-              </button>
-            ))}
+            {tones.map((t) => {
+              const active = tone === t.label;
+              return (
+                <button
+                  key={t.label}
+                  type="button"
+                  onClick={() => setTone(t.label)}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150"
+                  style={{
+                    background: active ? t.bg : "var(--surface)",
+                    color: active ? "var(--text)" : "var(--text-2)",
+                    border: `1px solid ${active ? t.border : "var(--border)"}`,
+                    fontWeight: active ? 700 : 500,
+                  }}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Length */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-            Post Length
+        {/* Length — hidden for Twitter */}
+        {platform === "linkedin" && <div>
+          <label className="block text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: "var(--text)" }}>
+            Length
           </label>
-          <div className="flex gap-3">
-            {lengths.map((l) => (
-              <label
-                key={l.value}
-                className={`flex-1 flex items-center justify-center gap-2 border rounded-lg px-3 py-2.5 text-sm cursor-pointer transition-colors ${
-                  length === l.value
-                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400"
-                    : "border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="length"
-                  value={l.value}
-                  checked={length === l.value}
-                  onChange={() => setLength(l.value)}
-                  className="sr-only"
-                />
-                {l.label}
-              </label>
-            ))}
+          <div className="grid grid-cols-3 gap-2">
+            {lengths.map((l) => {
+              const active = length === l.value;
+              return (
+                <button
+                  key={l.value}
+                  type="button"
+                  onClick={() => setLength(l.value)}
+                  className="rounded-lg px-3 py-2.5 text-sm text-center transition-all duration-150"
+                  style={{
+                    background: active ? l.bg : "var(--surface)",
+                    border: `1px solid ${active ? l.border : "var(--border)"}`,
+                  }}
+                >
+                  <span
+                    className="block text-xs"
+                    style={{ color: "var(--text)", fontWeight: active ? 700 : 500 }}
+                  >
+                    {l.label}
+                  </span>
+                  <span
+                    className="block text-[11px] mt-0.5"
+                    style={{ color: "var(--text-2)" }}
+                  >
+                    {l.sub}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-        </div>
+        </div>}
 
         {/* Reference Posts */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-            Reference Posts{" "}
-            <span className="text-gray-400 font-normal">(optional)</span>
+          <label className="block text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: "var(--text)" }}>
+            Reference Posts
+            <span className="normal-case ml-1.5 font-normal" style={{ color: "var(--text-3)" }}>(optional)</span>
           </label>
           <textarea
             value={referencePosts}
             onChange={(e) => setReferencePosts(e.target.value)}
-            placeholder="Paste 1–3 LinkedIn posts you like as style reference..."
-            rows={4}
-            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="Paste 1–3 posts you admire as a style reference..."
+            rows={3}
+            className={inputClass + " resize-none"}
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              color: "var(--text)",
+            }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--border-2)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
           />
         </div>
 
+        {/* Error */}
         {error && (
-          <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg px-4 py-2.5">
+          <p
+            className="text-xs rounded-lg px-4 py-3"
+            style={{
+              background: "var(--surface-2)",
+              color: "var(--text-2)",
+              border: "1px solid var(--border)",
+            }}
+          >
             {error}
           </p>
         )}
 
-        {/* Hook Picker (shown when hooks are loaded) */}
+        {/* Hook Picker */}
         {(hooks.length > 0 || hooksLoading) && (
           <HookPicker
             hooks={hooks}
@@ -223,32 +330,65 @@ export default function GenerateForm() {
           />
         )}
 
-        {/* Action buttons */}
-        <div className="flex gap-3">
+        {/* Buttons */}
+        <div className="flex flex-col sm:flex-row gap-2 pt-1">
           <button
             type="button"
             onClick={handleGenerateHooks}
             disabled={hooksLoading || loading}
-            className="flex-1 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 text-gray-700 dark:text-gray-300 font-semibold py-3 rounded-lg text-sm border border-gray-300 dark:border-gray-600 transition-colors"
+            className="w-full sm:flex-1 py-3 sm:py-2.5 rounded-lg text-sm font-medium transition-all duration-150 disabled:opacity-40"
+            style={{
+              background: "var(--surface)",
+              color: "var(--text-2)",
+              border: "1px solid var(--border)",
+            }}
+            onMouseEnter={(e) => {
+              if (!hooksLoading && !loading) {
+                (e.currentTarget as HTMLElement).style.borderColor = "var(--border-2)";
+                (e.currentTarget as HTMLElement).style.color = "var(--text)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+              (e.currentTarget as HTMLElement).style.color = "var(--text-2)";
+            }}
           >
-            {hooksLoading ? "Generating Hooks..." : "Generate Hooks Only"}
+            {hooksLoading ? "Generating..." : "⚡ Hooks Only"}
           </button>
 
           <button
             type="submit"
             disabled={loading || hooksLoading}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3 rounded-lg text-sm transition-colors"
+            className="w-full sm:flex-[2] py-3 sm:py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 disabled:opacity-40"
+            style={{
+              background: "var(--text)",
+              color: "var(--bg)",
+            }}
           >
             {loading
-              ? "Generating..."
+              ? "Writing..."
               : selectedHook
-              ? "Generate Post with Hook"
-              : "Generate Post"}
+              ? "Generate with Hook →"
+              : platform === "twitter"
+              ? "Generate Tweet →"
+              : "Generate Post →"}
           </button>
         </div>
       </form>
 
-      {output && <PostOutput post={output} />}
+      {/* Output */}
+      {output && (
+        <PostOutput
+          post={output}
+          persona={persona}
+          platform={platform}
+          onRegenerate={() => {
+            const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+            handleGenerate(fakeEvent);
+          }}
+          regenerating={loading}
+        />
+      )}
     </div>
   );
 }

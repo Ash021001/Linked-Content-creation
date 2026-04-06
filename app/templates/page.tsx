@@ -12,18 +12,28 @@ export default function TemplatesPage() {
     active === "All" ? templates : templates.filter((t) => t.category === active);
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-10">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">Templates</h1>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-        Pick a template to instantly pre-fill the Generate Post form. Edit anything before generating.
-      </p>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
 
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-xl font-semibold mb-1" style={{ color: "var(--text)" }}>
+          Templates
+        </h1>
+        <p className="text-sm" style={{ color: "var(--text-3)" }}>
+          Click any template to instantly pre-fill the generator.
+        </p>
+      </div>
+
+      {/* Filter */}
       <CategoryFilter active={active} onChange={setActive} />
 
+      {/* Grid */}
       {filtered.length === 0 ? (
-        <p className="mt-10 text-sm text-gray-400 text-center">No templates in this category yet.</p>
+        <div className="mt-16 text-center">
+          <p className="text-sm" style={{ color: "var(--text-3)" }}>No templates in this category yet.</p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-6">
           {filtered.map((t) => (
             <TemplateCard key={t.id} template={t} />
           ))}
