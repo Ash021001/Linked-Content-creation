@@ -15,12 +15,42 @@ function timeAgo(ts: number): string {
   return `${d}d ago`;
 }
 
+// Same color psychology as generate form
+const toneColors: Record<string, { bg: string; border: string; text: string; accent: string }> = {
+  Professional:   { bg: "rgba(96,165,250,0.18)",  border: "rgba(96,165,250,0.55)",  text: "rgba(96,165,250,0.95)",  accent: "rgba(96,165,250,0.7)"  },
+  Conversational: { bg: "rgba(52,211,153,0.18)",  border: "rgba(52,211,153,0.55)",  text: "rgba(52,211,153,0.95)",  accent: "rgba(52,211,153,0.7)"  },
+  Inspirational:  { bg: "rgba(251,191,36,0.18)",  border: "rgba(251,191,36,0.55)",  text: "rgba(251,191,36,0.95)",  accent: "rgba(251,191,36,0.7)"  },
+  Analytical:     { bg: "rgba(167,139,250,0.18)", border: "rgba(167,139,250,0.55)", text: "rgba(167,139,250,0.95)", accent: "rgba(167,139,250,0.7)" },
+  Humorous:       { bg: "rgba(251,146,60,0.18)",  border: "rgba(251,146,60,0.55)",  text: "rgba(251,146,60,0.95)",  accent: "rgba(251,146,60,0.7)"  },
+  Bold:           { bg: "rgba(251,113,133,0.18)", border: "rgba(251,113,133,0.55)", text: "rgba(251,113,133,0.95)", accent: "rgba(251,113,133,0.7)" },
+};
+
+const defaultTone = { bg: "rgba(148,163,184,0.18)", border: "rgba(148,163,184,0.4)", text: "rgba(148,163,184,0.9)", accent: "rgba(148,163,184,0.5)" };
+
+// Avatar color based on persona initial
+const avatarPalette = [
+  { bg: "rgba(96,165,250,0.25)",  color: "rgba(96,165,250,1)"  },
+  { bg: "rgba(52,211,153,0.25)",  color: "rgba(52,211,153,1)"  },
+  { bg: "rgba(251,191,36,0.25)",  color: "rgba(251,191,36,1)"  },
+  { bg: "rgba(167,139,250,0.25)", color: "rgba(167,139,250,1)" },
+  { bg: "rgba(251,146,60,0.25)",  color: "rgba(251,146,60,1)"  },
+  { bg: "rgba(251,113,133,0.25)", color: "rgba(251,113,133,1)" },
+];
+
+function getAvatarColor(name: string) {
+  const idx = name.charCodeAt(0) % avatarPalette.length;
+  return avatarPalette[idx];
+}
+
 function PostCard({ item, onDelete }: { item: HistoryItem; onDelete: () => void }) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const preview = item.post.split("\n").filter(Boolean)[0] ?? "";
+  const tone = toneColors[item.tone] ?? defaultTone;
+  const avatar = getAvatarColor(item.persona);
+  const isTwitter = item.platform === "twitter";
 
   function handleCopy() {
     navigator.clipboard.writeText(item.post);
@@ -41,13 +71,17 @@ function PostCard({ item, onDelete }: { item: HistoryItem; onDelete: () => void 
   return (
     <div
       className="rounded-xl overflow-hidden transition-all duration-150"
-      style={{ border: "1px solid var(--border)", background: "var(--surface)" }}
+      style={{
+        border: "1px solid var(--border)",
+        background: "var(--surface)",
+        borderLeft: `3px solid ${tone.accent}`,
+      }}
     >
       {/* Card header */}
       <div className="flex items-center gap-3 px-4 py-3.5" style={{ borderBottom: "1px solid var(--border)" }}>
         <div
           className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-          style={{ background: "var(--surface-2)", color: "var(--text)" }}
+          style={{ background: avatar.bg, color: avatar.color }}
         >
           {item.persona[0].toUpperCase()}
         </div>
@@ -60,9 +94,29 @@ function PostCard({ item, onDelete }: { item: HistoryItem; onDelete: () => void 
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {/* Platform badge */}
+          {isTwitter ? (
+            <span
+              className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded"
+              style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-2)", border: "1px solid var(--border)" }}
+            >
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622Zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+              X
+            </span>
+          ) : (
+            <span
+              className="text-[10px] font-semibold px-2 py-0.5 rounded"
+              style={{ background: "rgba(10,102,194,0.18)", color: "rgba(96,165,250,0.95)", border: "1px solid rgba(10,102,194,0.4)" }}
+            >
+              in
+            </span>
+          )}
+          {/* Tone badge */}
           <span
-            className="text-[10px] px-2 py-0.5 rounded"
-            style={{ background: "var(--surface-2)", color: "var(--text-3)" }}
+            className="text-[10px] font-semibold px-2 py-0.5 rounded"
+            style={{ background: tone.bg, color: tone.text, border: `1px solid ${tone.border}` }}
           >
             {item.tone}
           </span>

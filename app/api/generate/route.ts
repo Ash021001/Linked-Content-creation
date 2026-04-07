@@ -31,16 +31,25 @@ ${selectedHook ? `The tweet must start with or be built around this hook:\n"${se
 FORMAT:
 ${style}
 
-RULES (non-negotiable):
+TWEET RULES (non-negotiable):
 - Maximum 3 lines total — ideally 1 or 2
 - Every word must earn its place — cut anything that doesn't add punch
-- No hashtags. No @mentions. No "Thread:". No em-dashes.
+- No @mentions. No "Thread:". No em-dashes.
 - No filler openers: "In today's world", "Hot take:", "Unpopular opinion:"
 - Write the opinion, don't announce you're giving one
 - Can be witty, irreverent, or uncomfortably direct — that's what performs
 - No corporate tone whatsoever
 
-Return only the tweet text. Nothing else.`;
+HASHTAG RULES (append at the very end of the tweet, on the same or next line):
+- Exactly 1–2 hashtags, nothing more
+- Must be hyper-specific to the exact topic — not generic (#success, #motivation, #hustle, #mindset, #grind, #entrepreneur)
+- Use real communities people search (e.g. #buildinpublic, #SaaS, #IndieHackers, #ProductManagement, #B2BSales)
+- No spaces inside hashtags
+
+Return ONLY valid JSON (no markdown, no backticks):
+{
+  "post": "the tweet text with hashtags at the end"
+}`;
 }
 
 function buildPrompt(
@@ -130,7 +139,17 @@ INSIGHT: Land 1–3 opinionated, specific lines the reader wants to screenshot. 
 CTA: ${ctaStyle}
 ${referencePosts ? `\n---\nSTYLE REFERENCE — match the voice and rhythm of these posts:\n${referencePosts}\n` : ""}
 ---
-Return plain text only. No JSON. No section labels. No intro. Just the post.`;
+HASHTAG RULES (append at the very end of the post, after the CTA):
+- Exactly 3–5 hashtags on their own line, nothing more
+- Hyper-specific to the exact topic — not generic (#success, #motivation, #hustle, #blessed, #mindset, #grind, #entrepreneur unless deeply relevant)
+- Use real communities people search (e.g. #ProductManagement, #StartupLife, #B2BSales, #GrowthMarketing, #EngineeringLeadership, #VentureCapital)
+- Capitalise each word for readability (#BuildInPublic not #buildinpublic)
+- No spaces inside hashtags
+
+Return ONLY valid JSON (no markdown, no backticks):
+{
+  "post": "the full post text with hashtags at the end"
+}`;
 }
 
 async function generateWithGroq(prompt: string): Promise<string> {
@@ -139,7 +158,8 @@ async function generateWithGroq(prompt: string): Promise<string> {
     model: "llama-3.3-70b-versatile",
     messages: [{ role: "user", content: prompt }],
     temperature: 0.85,
-    max_tokens: 1200,
+    max_tokens: 1400,
+    response_format: { type: "json_object" },
   });
   return completion.choices[0].message.content ?? "";
 }
@@ -152,6 +172,7 @@ async function generateWithOllama(prompt: string): Promise<string> {
       model: OLLAMA_MODEL,
       messages: [{ role: "user", content: prompt }],
       stream: false,
+      format: "json",
       options: { temperature: 0.85 },
     }),
   });
@@ -172,17 +193,22 @@ export async function POST(req: NextRequest) {
     : buildPrompt(persona, niche, tone, length ?? "medium", referencePosts ?? "", selectedHook ?? "");
 
   try {
-    let post: string;
+    let raw: string;
 
     if (GROQ_API_KEY) {
-      post = await generateWithGroq(prompt);
+      raw = await generateWithGroq(prompt);
     } else {
-      post = await generateWithOllama(prompt);
+      raw = await generateWithOllama(prompt);
     }
 
-    post = post.trim();
+    raw = raw.trim();
 
-    if (!post) throw new Error("Empty response from AI");
+    if (!raw) throw new Error("Empty response from AI");
+
+    const parsed = JSON.parse(raw);
+    const post = parsed.post?.trim();
+
+    if (!post) throw new Error("AI returned no post content");
 
     return NextResponse.json({ post });
   } catch (err: unknown) {

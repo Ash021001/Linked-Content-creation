@@ -110,7 +110,13 @@ export default function GenerateForm() {
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
 
       {/* Header */}
-      <div className="mb-6 sm:mb-8">
+      <div
+        className="mb-6 sm:mb-8 rounded-xl px-5 py-5"
+        style={{
+          background: "linear-gradient(135deg, rgba(96,165,250,0.08) 0%, rgba(167,139,250,0.08) 50%, rgba(251,146,60,0.06) 100%)",
+          border: "1px solid var(--border)",
+        }}
+      >
         <h1 className="text-lg sm:text-xl font-semibold mb-1" style={{ color: "var(--text)" }}>
           Generate Post
         </h1>
@@ -123,7 +129,8 @@ export default function GenerateForm() {
 
         {/* Platform selector */}
         <div>
-          <label className="block text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: "var(--text)" }}>
+          <label className="flex items-center gap-1.5 text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: "var(--text)" }}>
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "rgba(96,165,250,0.9)" }} />
             Platform
           </label>
           <div className="grid grid-cols-2 gap-2">
@@ -177,7 +184,8 @@ export default function GenerateForm() {
 
         {/* Persona */}
         <div>
-          <label className="block text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: "var(--text)" }}>
+          <label className="flex items-center gap-1.5 text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: "var(--text)" }}>
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "rgba(52,211,153,0.9)" }} />
             Persona
           </label>
           <select
@@ -199,7 +207,8 @@ export default function GenerateForm() {
 
         {/* Niche */}
         <div>
-          <label className="block text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: "var(--text)" }}>
+          <label className="flex items-center gap-1.5 text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: "var(--text)" }}>
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "rgba(251,191,36,0.9)" }} />
             Topic / Niche
           </label>
           <input
@@ -220,7 +229,8 @@ export default function GenerateForm() {
 
         {/* Tone */}
         <div>
-          <label className="block text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: "var(--text)" }}>
+          <label className="flex items-center gap-1.5 text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: "var(--text)" }}>
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "rgba(167,139,250,0.9)" }} />
             Tone
           </label>
           <div className="flex flex-wrap gap-2">
@@ -248,7 +258,8 @@ export default function GenerateForm() {
 
         {/* Length — hidden for Twitter */}
         {platform === "linkedin" && <div>
-          <label className="block text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: "var(--text)" }}>
+          <label className="flex items-center gap-1.5 text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: "var(--text)" }}>
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "rgba(251,146,60,0.9)" }} />
             Length
           </label>
           <div className="grid grid-cols-3 gap-2">
@@ -285,7 +296,8 @@ export default function GenerateForm() {
 
         {/* Reference Posts */}
         <div>
-          <label className="block text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: "var(--text)" }}>
+          <label className="flex items-center gap-1.5 text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: "var(--text)" }}>
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "rgba(251,113,133,0.9)" }} />
             Reference Posts
             <span className="normal-case ml-1.5 font-normal" style={{ color: "var(--text-3)" }}>(optional)</span>
           </label>

@@ -31,10 +31,10 @@
   --surface-2: #201e1c;   /* elevated surface */
   --border:    #2c2926;
   --border-2:  #3d3a36;
-  --text:      #f0ece8;   /* warm white — easier on eyes than #fff */
-  --text-2:    #a09890;
-  --text-3:    #5a5450;
-  --accent:    #f0ece8;
+  --text:      #ffffff;   /* pure white — max readability */
+  --text-2:    #c9c5c1;   /* light warm gray — clearly visible */
+  --text-3:    #7a7470;   /* muted — for hints/labels only */
+  --accent:    #ffffff;
   --accent-fg: #0f0e0d;
 }
 
