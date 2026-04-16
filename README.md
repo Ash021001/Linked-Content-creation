@@ -2,6 +2,8 @@
 
 A minimal, clean web app for generating high-quality LinkedIn posts using AI. Built for founders, engineers, marketers, and creators who want to publish consistently without spending hours on copy.
 
+Try it here I have deployed it using vercel too --> https://linked-content-creation.vercel.app/
+
 ---
 
 ## Features
