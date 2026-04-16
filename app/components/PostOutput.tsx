@@ -3,37 +3,45 @@
 import { useState, useEffect } from "react";
 
 interface Props {
-  post: string;
+  variations: string[];
   persona?: string;
   platform?: "linkedin" | "twitter";
   onRegenerate?: () => void;
   regenerating?: boolean;
 }
 
-export default function PostOutput({ post, persona, platform = "linkedin", onRegenerate, regenerating }: Props) {
+export default function PostOutput({ variations, persona, platform = "linkedin", onRegenerate, regenerating }: Props) {
+  const [activeIdx, setActiveIdx] = useState(0);
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editedPost, setEditedPost] = useState(post);
+  const [editedPosts, setEditedPosts] = useState<string[]>(variations);
 
-  // Sync if a new post comes in
+  // Sync when new variations arrive
   useEffect(() => {
-    setEditedPost(post);
+    setEditedPosts(variations);
+    setActiveIdx(0);
     setIsEditing(false);
-  }, [post]);
+  }, [variations]);
+
+  const activePost = editedPosts[activeIdx] ?? "";
 
   function handleCopy() {
-    navigator.clipboard.writeText(editedPost);
+    navigator.clipboard.writeText(activePost);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
 
-  function handleDoneEditing() {
-    setIsEditing(false);
+  function handleEdit(val: string) {
+    const updated = [...editedPosts];
+    updated[activeIdx] = val;
+    setEditedPosts(updated);
   }
 
   // Split into paragraphs; first = hook
-  const paragraphs = editedPost.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+  const paragraphs = activePost.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
   const [hook, ...body] = paragraphs;
+
+  const showTabs = variations.length > 1 && platform === "linkedin";
 
   return (
     <div
@@ -62,7 +70,7 @@ export default function PostOutput({ post, persona, platform = "linkedin", onReg
 
         {/* Edit toggle */}
         <button
-          onClick={() => isEditing ? handleDoneEditing() : setIsEditing(true)}
+          onClick={() => setIsEditing((v) => !v)}
           className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-150"
           style={{
             background: isEditing ? "var(--text)" : "var(--surface-2)",
@@ -108,6 +116,35 @@ export default function PostOutput({ post, persona, platform = "linkedin", onReg
         )}
       </div>
 
+      {/* Variation tabs */}
+      {showTabs && (
+        <div
+          className="flex gap-1 px-4 sm:px-5 pt-3 pb-1"
+        >
+          {variations.map((_, i) => {
+            const labels = ["Story", "Contrarian", "Numbers"];
+            const isActive = i === activeIdx;
+            return (
+              <button
+                key={i}
+                onClick={() => { setActiveIdx(i); setIsEditing(false); }}
+                className="text-[11px] font-semibold px-3 py-1 rounded-full transition-all duration-150"
+                style={{
+                  background: isActive ? "var(--text)" : "var(--surface-2)",
+                  color: isActive ? "var(--bg)" : "var(--text-3)",
+                  border: `1px solid ${isActive ? "var(--text)" : "var(--border)"}`,
+                }}
+              >
+                {labels[i] ?? `V${i + 1}`}
+              </button>
+            );
+          })}
+          <span className="ml-auto text-[10px] self-center" style={{ color: "var(--text-3)" }}>
+            3 variations
+          </span>
+        </div>
+      )}
+
       {/* Content — edit mode */}
       {isEditing ? (
         <div className="px-4 sm:px-5 py-4 sm:py-5">
@@ -115,8 +152,8 @@ export default function PostOutput({ post, persona, platform = "linkedin", onReg
             Editing — changes apply to copy
           </p>
           <textarea
-            value={editedPost}
-            onChange={(e) => setEditedPost(e.target.value)}
+            value={activePost}
+            onChange={(e) => handleEdit(e.target.value)}
             rows={platform === "twitter" ? 4 : 16}
             className="w-full text-sm leading-relaxed rounded-lg px-4 py-3.5 resize-none outline-none transition-all duration-150"
             style={{
@@ -128,17 +165,15 @@ export default function PostOutput({ post, persona, platform = "linkedin", onReg
           />
         </div>
       ) : platform === "twitter" ? (
-        /* Twitter — compact single block */
         <div className="px-4 sm:px-5 py-5 sm:py-6">
           <p
             className="text-base sm:text-lg font-medium leading-relaxed whitespace-pre-line"
             style={{ color: "var(--text)" }}
           >
-            {editedPost}
+            {activePost}
           </p>
         </div>
       ) : (
-        /* LinkedIn — hook highlight + body */
         <div className="px-4 sm:px-5 py-4 sm:py-5 space-y-4">
           {hook && (
             <div

@@ -60,95 +60,70 @@ function buildPrompt(
   referencePosts: string,
   selectedHook?: string
 ): string {
-  const lineTarget =
-    length === "short" ? "10–14 lines" : length === "long" ? "26–34 lines" : "16–22 lines";
+  const wordTarget =
+    length === "short"
+      ? "under 75 words per variation — hard limit, be ruthless with cuts"
+      : length === "long"
+      ? "200–280 words per variation"
+      : "100–160 words per variation";
 
-  const hookTechnique = pick([
-    `HIGH-STAKES MOMENT — drop the reader mid-scene with no context yet.\n   Example: "The wire transfer failed at 11:58pm."`,
-    `SPECIFIC NUMBER — lead with a real, surprising figure that demands explanation.\n   Example: "I turned down $340K. Best decision I ever made."`,
-    `CONTRARIAN TRUTH — directly contradict widely-held advice.\n   Example: "Consistency is overrated. Timing matters more."`,
-    `CURIOSITY GAP — hint at a reveal without giving it away.\n   Example: "There's one line in every pitch deck that kills the deal. Most founders never see it."`,
-    `UNCOMFORTABLE CONFESSION — admit a failure or mistake upfront.\n   Example: "For two years I lied to my investors about our churn."`,
-    `PROVOCATIVE QUESTION — challenge the reader's identity or assumptions directly.\n   Example: "When did you last say no to something that paid well?"`,
-    `THE UNEXPECTED OUTCOME — state a result that shouldn't make sense.\n   Example: "We stopped posting on social media. Our inbound tripled."`,
-  ]);
+  return `You are ghostwriting for a ${persona} with 50,000+ LinkedIn followers.
+Their posts regularly hit 300+ comments and get reshared constantly.
+People describe their writing as: honest, direct, and oddly specific.
 
-  const bodyStructure = pick([
-    `STORY ARC: Open with what happened → what you thought at the time → the turning point → what you now know. Each beat is 2–3 lines.`,
-    `NUMBERED INSIGHTS (no bullets): "1." "2." "3." — each on its own line, each a single crisp insight. Build to the most important one last.`,
-    `CONTRAST PAIRS: Alternate "what everyone does" vs "what actually works." Short lines. Let the contrast do the work.`,
-    `ZOOM IN: Start broad (the industry/world) → zoom into your specific experience → zoom back out to the universal lesson.`,
-    `BEFORE / AFTER: Describe the old way you thought or worked. Then the moment it changed. Then what's different now.`,
-    `LIST OF TRUTHS: 4–6 short, opinionated one-liners that each stand alone. No connective tissue. Just truths, stacked.`,
-  ]);
-
-  const ctaStyle = pick([
-    `End with a question that only someone who read the whole post would know how to answer.`,
-    `End with a direct challenge: tell the reader to do one specific thing today.`,
-    `End with an invitation to disagree — invite the counterpoint to start a thread.`,
-    `End by asking readers to share the moment this happened to them too.`,
-    `End with a soft vulnerability: admit you're still figuring it out and ask what they've found.`,
-  ]);
-
-  const rhythmStyle = pick([
-    `Rhythm: ultra-short. Most lines are 5–8 words. Staccato. Punchy. Like a drumbeat.`,
-    `Rhythm: varied. Mix 1–2 very short lines (4–6 words) with occasional longer ones (12–15 words) for emphasis.`,
-    `Rhythm: conversational flow. Lines feel like natural speech — not clipped, but never rambling. Read it aloud test.`,
-  ]);
-
-  return `You are a top LinkedIn ghostwriter. Your posts regularly hit 500+ comments. You write for a ${persona}.
-
-Write a LinkedIn post about: "${niche}"
+Write 3 completely different LinkedIn posts about: "${niche}"
 Tone: ${tone}
-Length: ${lineTarget} total
+Length: ${wordTarget}
 
----
-FORMATTING (non-negotiable):
-- One sentence per line — never two thoughts on the same line
-- Blank line between every 2–3 lines
-- No dashes, asterisks, bold, headers, or markdown — plain text only
+━━━ WHAT MAKES THESE POSTS WORK ━━━
+
+HOOK (first 2 lines — make them impossible to scroll past):
+- Lead with a moment, a number, or a claim that creates instant tension
+- Line 2 adds a second punch or deepens the mystery — never explains yet
+- Do NOT start with "I" on the very first word
+- Do NOT use: "In today's world", "Hot take:", "Unpopular opinion:", "Let that sink in"
+- Do NOT use the persona label in the hook ("As a ${persona}...") unless it adds real irony or authority
+
+BODY:
+- One sentence per line. Never two ideas on the same line.
+- Blank line between every 2–3 lines — give the eye room to breathe
+- Tell it like a story or build it like a case. Either works. No bullet points.
+- Be specific: real numbers, real moments, real decisions. Vague = forgettable.
+- Write like you're texting a smart friend who would call you out on BS
+
+VALUE (1–3 lines):
+- The insight the reader wants to screenshot and save
+- Opinionated. Take a position. No "it depends."
+
+CTA (last line):
+- One specific question that only someone who read the whole thing would answer
+- Not "What do you think?" — make it personal to the topic
+
+━━━ HARD RULES ━━━
 - No em-dashes (—) anywhere
+- No markdown, bold, asterisks, or headers
+- Max 12 words per line
+- Never use: leverage, synergy, ecosystem, journey, passionate, excited, humbled, grateful, thrilled, game-changer, unlock, empower, at the end of the day, the reality is
 
-${selectedHook
-  ? `---
-HOOK — the user has chosen this exact hook. Use it as the first line verbatim:
-"${selectedHook}"
+━━━ 3 VARIATION STYLES ━━━
+Variation 1 — STORY: Open with a specific real moment or decision. Take the reader through what happened, what you thought, what changed.
+Variation 2 — CONTRARIAN: Open with a bold claim that contradicts what most people in this space believe. Build the case. Land the lesson.
+Variation 3 — NUMBERS/RESULTS: Open with a specific surprising result or stat. Work backwards through what caused it.
 
-Then add a second line that deepens the tension or adds a punch — do NOT explain yet.`
-  : `---
-HOOK — use this specific technique for the opening 2 lines:
-${hookTechnique}
+${selectedHook ? `━━━ HOOK CONSTRAINT ━━━\nEvery variation must open with this exact line:\n"${selectedHook}"\n` : ""}
+${referencePosts ? `━━━ VOICE REFERENCE ━━━\nMatch the rhythm and directness of these posts:\n${referencePosts}\n` : ""}
+━━━ HASHTAGS ━━━
+End each post with 3–5 hashtags on their own line.
+Must be hyper-specific to the exact topic. Not generic (#success #motivation #hustle #mindset).
+Capitalise each word: #BuildInPublic not #buildinpublic.
 
-Line 2 must deepen the tension or add a second punch — do NOT explain yet.
-Only use "${persona}" in the hook if it adds genuine authority or irony. Never default to "As a ${persona}...".`}
-
----
-BODY STRUCTURE — use this format:
-${bodyStructure}
-
-Banned words (never use): leverage, synergy, ecosystem, journey, passionate, excited, humbled, grateful, thrilled, space (as in "industry space").
-Write like you're messaging a smart friend, not filing a report.
-
----
-${rhythmStyle}
-
----
-INSIGHT: Land 1–3 opinionated, specific lines the reader wants to screenshot. No "it depends."
-
----
-CTA: ${ctaStyle}
-${referencePosts ? `\n---\nSTYLE REFERENCE — match the voice and rhythm of these posts:\n${referencePosts}\n` : ""}
----
-HASHTAG RULES (append at the very end of the post, after the CTA):
-- Exactly 3–5 hashtags on their own line, nothing more
-- Hyper-specific to the exact topic — not generic (#success, #motivation, #hustle, #blessed, #mindset, #grind, #entrepreneur unless deeply relevant)
-- Use real communities people search (e.g. #ProductManagement, #StartupLife, #B2BSales, #GrowthMarketing, #EngineeringLeadership, #VentureCapital)
-- Capitalise each word for readability (#BuildInPublic not #buildinpublic)
-- No spaces inside hashtags
-
-Return ONLY valid JSON (no markdown, no backticks):
+Return ONLY valid JSON (no markdown, no backticks, no extra keys):
 {
-  "post": "the full post text with hashtags at the end"
+  "variations": [
+    "full text of variation 1 with hashtags at end",
+    "full text of variation 2 with hashtags at end",
+    "full text of variation 3 with hashtags at end"
+  ]
 }`;
 }
 
@@ -206,11 +181,17 @@ export async function POST(req: NextRequest) {
     if (!raw) throw new Error("Empty response from AI");
 
     const parsed = JSON.parse(raw);
+
+    // LinkedIn returns variations array; Twitter returns single post
+    if (Array.isArray(parsed.variations) && parsed.variations.length > 0) {
+      const variations = parsed.variations.map((v: string) => v.trim()).filter(Boolean);
+      if (variations.length === 0) throw new Error("AI returned no post content");
+      return NextResponse.json({ variations });
+    }
+
     const post = parsed.post?.trim();
-
     if (!post) throw new Error("AI returned no post content");
-
-    return NextResponse.json({ post });
+    return NextResponse.json({ variations: [post] });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Generation failed";
 

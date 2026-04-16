@@ -46,7 +46,7 @@ export default function GenerateForm() {
 
   const [loading, setLoading] = useState(false);
   const [hooksLoading, setHooksLoading] = useState(false);
-  const [output, setOutput] = useState<string | null>(null);
+  const [output, setOutput] = useState<string[] | null>(null);
   const [hooks, setHooks] = useState<string[]>([]);
   const [selectedHook, setSelectedHook] = useState<string>("");
   const [error, setError] = useState("");
@@ -94,8 +94,9 @@ export default function GenerateForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Generation failed");
-      setOutput(data.post);
-      saveToHistory({ post: data.post, persona, niche, tone, length, platform });
+      const variations: string[] = data.variations ?? [];
+      setOutput(variations);
+      if (variations[0]) saveToHistory({ post: variations[0], persona, niche, tone, length, platform });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -391,7 +392,7 @@ export default function GenerateForm() {
       {/* Output */}
       {output && (
         <PostOutput
-          post={output}
+          variations={output}
           persona={persona}
           platform={platform}
           onRegenerate={() => {
